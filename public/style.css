@@ -1,0 +1,21 @@
+body {
+	padding-top: 70px;
+	/* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
+}
+.slider {
+	display: inline-block;
+	margin-top: 20px;
+	margin-left: 20px;
+}
+.slider .rs-range-color {
+	background-color: #ffffff;
+}
+.slider .rs-path-color {
+	background-color: #ffffff;
+}
+.slider .rs-handle {
+	background-color: #000000;
+}
+.slider .rs-border {
+	border-color: black;
+}
