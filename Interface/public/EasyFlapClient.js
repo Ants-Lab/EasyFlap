@@ -1,9 +1,46 @@
 var cfg, copyCfg, updates = -1,
 	colors = ['#27ae60', '#2980b9', '#c0392b', '#8e44ad'];
 
-var socket = io.connect('http://88.177.41.248:1621');
+var checkPublicAccess = function(callback){
+	
+	if(location.host === params.public + ':1621'){
+		callback(true);
+		return;
+	}
+	
+	var sock = io.connect(params.public + ':1621');
+	sock.on('connect', function(){
+		sock.disconnect();
+		sock.close();
+		callback(true);
+		return;
+	});
+	
+	sock.on('connect_error', function(){
+		sock.disconnect();
+		sock.close();
+		callback(false);
+		return;
+	});
+};
+
+if(location.host === params.local + ':1621'){
+	var socket = io.connect(params.local + ':1621');
+}else{ //Whatever the host is, try to connect to the public ip of the server
+	var socket = io.connect(params.public + ':1621');
+}
+
+socket.on('connect_error', function (message) {
+	console.log('Failed to connect to ' + params.public + ':1621' + ' trying to contact ' + params.local + ':1621' + '.');
+	socket.io.uri = params.local + ':1621';
+});
+
+socket.on('connect', function(){
+	console.log("Connected to : " + socket.io.uri);
+});
 
 socket.on('config', function (config) {
+	
 	updates++;
 
 	cfg = config;
@@ -64,12 +101,13 @@ var editShutterSettings = function (id) {
 
 	var applyChangesHandler = function () {
 		var loc = $('#shutterName').val();
+		$('#configBoxTitle').text('Configure ' + loc.toLowerCase() + ' shutters');
 		cfg.shutters[id - 1].loc = loc;
 		$('#table-loc-' + id).text(loc);
 		emitConfigChange();
 	};
 
-	$('#configBoxTitle').text('Configure shutter #' + id);
+	$('#configBoxTitle').text('Configure ' + cfg.shutters[id - 1].loc.toLowerCase() + ' shutters');
 
 	$('#applyChanges').bind('click', applyChangesHandler);
 
