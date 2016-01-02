@@ -6,5 +6,5 @@ Shutters automation in node.js
 From raspbian, just run :
 
 ```bash
-curl http://pastebin.com/raw/QWdgLynf && bash install.sh
+curl http://pastebin.com/raw/QWdgLynf >> install.sh && bash install.sh && rm install.sh
 ```
