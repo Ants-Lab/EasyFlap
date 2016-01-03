@@ -4,7 +4,8 @@
   "description": "",
   "main": "box.js",
   "dependencies": {
-    "piswitch": "~1.2.3"
+    "piswitch": "~1.2.3",
+    "binstring": "~0.2.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
