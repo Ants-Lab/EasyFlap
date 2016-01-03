@@ -288,6 +288,9 @@ var init = function () {
 		} else{
 			if(localStorage.getItem('token') !== null){
 				socket.emit('login_attempt', { "token": localStorage.getItem('token') });
+			}else{
+				$('#loginBox').show();
+				$('#particles').show();
 			}
 			
 			$('#loginButton').on('click', function () {
@@ -304,15 +307,13 @@ var init = function () {
 	
 	socket.on('login_response', function(res){
 		
-		console.log(res);
-		
 		if(res.err === null && res.token !== null){
 			token = res.token;
 			$('#loginBox').hide();
+			$('#particles').hide();
 			$('#navbar').show();
 			localStorage.setItem('token', res.token);
 			init();
-			console.log('success');
 		}else{
 			alertify.error(res.err);
 		}
@@ -327,6 +328,7 @@ var init = function () {
 		$('#container').empty();
 		$('#navbar').hide();
 		$('#loginBox').show();
+		$('#particles').show();
 		localStorage.removeItem('token');
 	});
 

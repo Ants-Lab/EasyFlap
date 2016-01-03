@@ -151,7 +151,7 @@ var init = function (params) {
 
 						if (success) {
 							var time = new Date().getTime();
-							if(!tokens.hasOwnProperty(loginData.token)){
+							if(loginData === null || !tokens.hasOwnProperty(loginData.token)){
 								token = crypto.randomBytes(64).toString('hex');
 								tokens[token] = {
 									time: time + sessionTimeLimit
