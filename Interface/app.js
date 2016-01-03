@@ -10,6 +10,11 @@ var express = require('express'),
 var cfg, users, sessionTimeLimit = 1800000; //30 minutes
 var tokens = {};
 
+var log = function(msg){
+	var date = new Date
+	console.log(date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + ': ' + JSON.stringify(msg));
+};
+
 //Get server's public and local ip
 pub_ip.v4(function (err, pubIp) {
 
@@ -30,8 +35,6 @@ pub_ip.v4(function (err, pubIp) {
 var checkAuth = function(socket, token){
 	
 	var date = new Date();
-			
-	console.log(tokens.hasOwnProperty(token));
 	
 	if(!tokens.hasOwnProperty(token)){
 		socket.emit("logout_req", "Invalid session token");
@@ -43,8 +46,8 @@ var checkAuth = function(socket, token){
 		delete tokens[token];
 		return false;
 	}
-						
-	tokens[token].lastActivity = date.getTime();
+	
+	log('Remaining session time: ' + (tokens[token].time - date.getTime())/60000 + 'm');
 	
 	return true;
 }
@@ -52,7 +55,7 @@ var checkAuth = function(socket, token){
 
 var init = function (params) {
 
-	console.log(params);
+	log(params);
 
 	//Read config.json
 	fs.readFile('./public/config.json', 'utf8', function (err, data) {
@@ -81,7 +84,7 @@ var init = function (params) {
 				});
 
 				var sendError = function (socket, errorMsg) {
-					console.log('Error: ' + errorMsg);
+					log('Error: ' + errorMsg);
 					socket.emit('err', errorMsg);
 				};
 
@@ -97,14 +100,11 @@ var init = function (params) {
 					});
 
 					socket.on('configUpdate', function (data) {
-						var date = new Date();
 						
 						if(!checkAuth(socket, data.token))
 							return;
-						
-						console.log('Config file got updated: ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds());
 
-						console.log({
+						log({
 							path: data.path,
 							value: data.newVal
 						});
@@ -119,7 +119,7 @@ var init = function (params) {
 
 
 						fs.writeFile('./public/config.json', JSON.stringify(cfg), function (err) {
-							if (err) console.log(err);
+							if (err) log(err);
 						});
 
 						socket.broadcast.emit('configUpdate', { path: data.path, newVal: data.newVal });
@@ -127,7 +127,7 @@ var init = function (params) {
 
 					socket.on('login_attempt', function (loginData) {
 						
-						console.log(loginData);
+						log(loginData);
 						
 						var err = null,
 							token = null,
@@ -139,7 +139,6 @@ var init = function (params) {
 							}
 						}else if(loginData.hasOwnProperty('token') && checkAuth(socket, loginData.token)){
 							success = true;
-							console.log('token');
 						}else if (loginData.user in users) {
 							if (users[loginData.user] === loginData.pass) {
 								success = true;
@@ -151,13 +150,15 @@ var init = function (params) {
 						}
 
 						if (success) {
-							token = crypto.randomBytes(64).toString('hex');
 							var time = new Date().getTime();
-							tokens[token] = {
-								time: time + sessionTimeLimit,
-								lastActivity: time
-							};
-							console.log(tokens);
+							if(!tokens.hasOwnProperty(loginData.token)){
+								token = crypto.randomBytes(64).toString('hex');
+								tokens[token] = {
+									time: time + sessionTimeLimit
+								};
+							}else{
+								token = loginData.token;
+							}
 						}
 
 						socket.emit('login_response', { err: err, token: token });
