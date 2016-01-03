@@ -7,7 +7,8 @@ var express = require('express'),
 	loc_ip = require('ip'),
 	crypto = require('crypto');
 
-var cfg, users;
+var cfg, users, sessionTimeLimit = 1800000; //30 minutes
+var tokens = {};
 
 //Get server's public and local ip
 pub_ip.v4(function (err, pubIp) {
@@ -26,6 +27,28 @@ pub_ip.v4(function (err, pubIp) {
 
 });
 
+var checkAuth = function(socket, token){
+	
+	var date = new Date();
+			
+	console.log(tokens.hasOwnProperty(token));
+	
+	if(!tokens.hasOwnProperty(token)){
+		socket.emit("logout_req", "Invalid session token");
+		return false;	
+	}
+						
+	if(date.getTime() > tokens[token].time){
+		socket.emit("logout_req", "Session timeout");
+		delete tokens[token];
+		return false;
+	}
+						
+	tokens[token].lastActivity = date.getTime();
+	
+	return true;
+}
+
 
 var init = function (params) {
 
@@ -41,7 +64,7 @@ var init = function (params) {
 				if (err) throw err;
 				users = JSON.parse(data);
 
-				if (!("admin" in Object.keys(users))) {
+				if (!("admin" in users)) {
 					users.admin = "raspberry";
 				}
 
@@ -75,6 +98,10 @@ var init = function (params) {
 
 					socket.on('configUpdate', function (data) {
 						var date = new Date();
+						
+						if(!checkAuth(socket, data.token))
+							return;
+						
 						console.log('Config file got updated: ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds());
 
 						console.log({
@@ -95,10 +122,12 @@ var init = function (params) {
 							if (err) console.log(err);
 						});
 
-						socket.broadcast.emit('configUpdate', data);
+						socket.broadcast.emit('configUpdate', { path: data.path, newVal: data.newVal });
 					});
 
 					socket.on('login_attempt', function (loginData) {
+						
+						console.log(loginData);
 						
 						var err = null,
 							token = null,
@@ -108,7 +137,10 @@ var init = function (params) {
 							if(socket.session.isLocalAccess){
 								success = true;
 							}
-						} else if (loginData.user in users) {
+						}else if(loginData.hasOwnProperty('token') && checkAuth(socket, loginData.token)){
+							success = true;
+							console.log('token');
+						}else if (loginData.user in users) {
 							if (users[loginData.user] === loginData.pass) {
 								success = true;
 							} else {
@@ -120,7 +152,12 @@ var init = function (params) {
 
 						if (success) {
 							token = crypto.randomBytes(64).toString('hex');
-							socket.session.token = token;
+							var time = new Date().getTime();
+							tokens[token] = {
+								time: time + sessionTimeLimit,
+								lastActivity: time
+							};
+							console.log(tokens);
 						}
 
 						socket.emit('login_response', { err: err, token: token });

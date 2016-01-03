@@ -1,7 +1,6 @@
 var cfg, copyCfg, updates = -1,
 	colors = ['#27ae60', '#2980b9', '#c0392b', '#8e44ad'],
-	socket,
-	token;
+	socket;
 
 var checkPublicAccess = function (callback) {
 
@@ -80,7 +79,8 @@ var init = function () {
 				if (diff.kind === 'E') { //Property edited
 					socket.emit('configUpdate', {
 						path: diff.path.join('.'),
-						newVal: diff.rhs 
+						newVal: diff.rhs ,
+						token: localStorage.getItem('token')
 					});
 				}
 			});
@@ -273,7 +273,7 @@ var init = function () {
 	};
 };
 
-window.onload = function () {
+(function () {
 	if (params.isLocalAccess) {
 		socket = io.connect(params.ip.local + ':1621');
 	} else { //Whatever the host is, try to connect to the public ip of the server
@@ -285,7 +285,11 @@ window.onload = function () {
 
 		if (params.isLocalAccess) {
 			socket.emit('login_attempt', null);
-		} else {
+		} else{
+			if(localStorage.getItem('token') !== null){
+				socket.emit('login_attempt', { "token": localStorage.getItem('token') });
+			}
+			
 			$('#loginButton').on('click', function () {
 				socket.emit('login_attempt', { "user": $('#user').val(), "pass": $('#pass').val() });
 			});
@@ -304,12 +308,26 @@ window.onload = function () {
 		
 		if(res.err === null && res.token !== null){
 			token = res.token;
-			$('#loginBox').empty();
+			$('#loginBox').hide();
 			$('#navbar').show();
+			localStorage.setItem('token', res.token);
 			init();
+			console.log('success');
 		}else{
 			alertify.error(res.err);
 		}
 	});
+	
+	socket.on('logout_req', function(err){
+		if(err !== null){
+			alertify.error(err);
+			setTimeout(400, function(){location.reload()});
+		}
+		//TODO: Bind and unbind socket.io listeners
+		$('#container').empty();
+		$('#navbar').hide();
+		$('#loginBox').show();
+		localStorage.removeItem('token');
+	});
 
-};
+})();
