@@ -7,14 +7,13 @@
 
 	<title>EasyFlap</title>
 
-	<script type="text/javascript" src="libs/jquery-1.11.3.min.js" onload="if(window.process){window.$ = window.jQuery = module.exports;}"></script>
-	
 	<script>
 		//Get parameters from the server using ejs
-		var params = {};
-		params.local = '<%= params.local %>';
-		params.public = '<%= params.public %>';
+		var params = JSON.parse('<%- JSON.stringify(params) %>');
 	</script>
+	
+	<!-- Jquery -->
+	<script type="text/javascript" src="libs/jquery-1.11.3.min.js" onload="if(window.process){window.$ = window.jQuery = module.exports;}">		</script>
 
 	<!-- Bootstrap -->
 	<link href="libs/bootstrap-3.3.6/css/bootstrap.min.css" rel="stylesheet">
@@ -31,6 +30,9 @@
 
 	<!-- DeepDiff -->
 	<script src="libs/deep-diff-0.3.3.min.js"></script>
+	
+	<!-- Alertify.js -->
+	<script src="libs/alertify-1.0.6.min.js"></script>
 
 	<!-- Style.css -->
 	<link rel="stylesheet" href="style.css">
@@ -41,76 +43,21 @@
 </head>
 
 <body>
-
-	<!-- Navigation Bar -->
-	<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-		<div class="container">
-			<!-- Brand and toggle get grouped for better mobile display -->
-			<div class="navbar-header">
-
-				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-					<span class="sr-only">Toggle navigation</span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-
-				<a class="navbar-brand" href="">EasyFlap</a>
-
-			</div>
-			<!-- Collect the nav links, forms, and other content for toggling -->
-			<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-				<ul class="nav navbar-nav">
-					<li>
-						<a href="#Control-Panel">Control Panel</a>
-					</li>
-					<li>
-						<a href="#Captors">Captors</a>
-					</li>
-					<li>
-						<a href="#Program">Program</a>
-					</li>
-					<li>
-						<a href="#Log">Log</a>
-					</li>
-				</ul>
-			</div>
-			<!-- /.navbar-collapse -->
-		</div>
-		<!-- /.container -->
-	</nav>
-
-	<!-- Modal window -->
-	<div class="container">
-
-		<div class="container" id="container"></div>
-
-		<div class="modal fade" id="configBox" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-			<div class="modal-dialog" role="document">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-							<span aria-hidden="true">&times;</span>
-						</button>
-						<h4 class="modal-title" id="configBoxTitle">Configure shutter</h4>
-					</div>
-					<div class="modal-body">
-						<form>
-							<div class="form-group">
-								<label class="control-label">Location</label>
-								<input type="text" class="form-control" placeholder="Brian's bedroom" autocomplete="off" id="shutterName">
-							</div>
-						</form>
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-default" id="closeConfigBox" data-dismiss="modal">Close</button>
-						<button type="button" class="btn btn-primary" id="applyChanges">Apply changes</button>
-					</div>
-				</div>
-			</div>
-		</div>
-
-	</div>
+	
+	<% if(!params.isLocalAccess){ %>
+		<% include ../partials/loginBox %>
+	<% } %>
+	
+	<% include ../partials/navbar %>
+	
+	<% if(params.isLocalAccess){ %>
+		<script>
+			$('#navbar').show();
+		</script>
+	<% } %>
+	
+	<% include ../partials/configBox %>
+	
 
 </body>
 
