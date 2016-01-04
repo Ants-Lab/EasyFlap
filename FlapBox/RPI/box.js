@@ -1,3 +1,11 @@
+/*
+ * Author : Valentin FRITZ
+ * Project : EasyFlap
+ * File : box.js
+ * Description : Management box
+ * Date : January 4, 2016
+ */
+
 //Import modules
 var net = require('net');
 var toBS = require('./toBinaryString.js').toBinaryString;

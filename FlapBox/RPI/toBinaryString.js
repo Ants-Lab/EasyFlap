@@ -1,3 +1,11 @@
+/*
+ * Author : Valentin FRITZ
+ * Project : EasyFlap
+ * File : toBinaryString.js
+ * Description : Convert byte value to string
+ * Date : January 4, 2016
+ */
+
 function toBinaryString(n) {
   if(n < 0 || n > 255){
     console.error("Invalid value, it has to be between 0 and 255.");
