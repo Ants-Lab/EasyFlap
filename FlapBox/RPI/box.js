@@ -1,14 +1,9 @@
+//Import modules
 var net = require('net');
-var rc = require('piswitch');
+var toBS = require('./toBinaryString.js').toBinaryString;
 
+//Global variable
 var port = 1627;
-
-rc.setup({
-  mode: 'gpio',
-  pulseLength: 330,
-  protocol: 1,
-  pin: 17
-});
 
 var server = net.createServer(function(socket) {
 
@@ -18,10 +13,23 @@ var server = net.createServer(function(socket) {
   //When receive data from client
   socket.on('data', function(data) {
     if(typeof data === 'string'){
+      //Parsing data
       var result = JSON.parse(data);
-      console.log('Shutter ID : ' + result.path.split('.')[1]);
-      console.log('Setting : ' + result.path.split('.')[2]);
-      console.log('Value : ' + result.newVal);
+      var id = result.path.split('.')[1],
+        setting = result.path.split('.')[2],
+        value = result.newVal;
+
+      //Log information on console
+      console.log('Shutter ID : ' + id);
+      console.log('Setting : ' + setting);
+      console.log('Value : ' + value);
+
+      //Send target angle to shutter to the arduino
+      if(setting == 'targetAngle'){
+        var message = toBS(3) + toBS(id) + toBS(1) + toBS(value);
+
+      }
+
     }
   });
 
