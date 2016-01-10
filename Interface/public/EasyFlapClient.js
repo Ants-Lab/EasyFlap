@@ -1,6 +1,6 @@
 var cfg, copyCfg, updates = -1, lastWidth = window.innerWidth,
 	colors = ['#27ae60', '#2980b9', '#c0392b', '#8e44ad'],
-	socket;
+	socket, tabs = ['Control-Panel', 'Captors', 'Program', 'Log'];
 
 var checkPublicAccess = function (callback) {
 
@@ -121,12 +121,14 @@ var init = function () {
 
 		var page = location.hash.substr(1);
 		page = page !== '' ? page : 'Control-Panel';
+		
+		$('.navbar-default li:nth-child(' + (tabs.indexOf(page) + 1) + ')').addClass('active');
 
 		switch (page) {
 
 			case "Control-Panel":
 
-				$('#container').html("<table class='table table-bordered table-hover' id='table'></table>");
+				$('#container').html("<table class='ef-table' id='table'></table>");
 
 				$('#table').html(
 					'<tr><th>id</th><th>Location</th><th>Opening angle</th><th>Configure</th></tr>'
@@ -134,12 +136,12 @@ var init = function () {
 
 				cfg.shutters.forEach(function (shutter) {
 					
-					var isSlider = window.innerWidth > 600;
+					var isSlider = window.innerWidth > 767;
 					var sliderOrSwitch = 
 						isSlider ? '<div id="slider-' + shutter.id + '" class="slider"></div>' :
 						'<input type="checkbox" id="switch-' + shutter.id + '" ' + (copyCfg.shutters[shutter.id - 1].targetAngle > 90 ? "checked" : "") + ' data-toggle="toggle" data-onstyle="success" data-offstyle="primary">';
 
-					$('#table').append('<tr id="tr-' + shutter.id + '">' + '<td>' + shutter.id + '</td>' + '<td id="table-loc-' + shutter.id + '">' + shutter.loc + '</td>' + '<td>' + sliderOrSwitch + '</td>' + '<td><button id="openConfig-' + shutter.id + '" type="button" class="btn btn-default" aria-label="Configure">' + '<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span></button>' + '</td></tr>');
+					$('#table').append('<tr>' + '<td>' + shutter.id + '</td>' + '<td id="table-loc-' + shutter.id + '">' + shutter.loc + '</td>' + '<td>' + sliderOrSwitch + '</td>' + '<td><button id="openConfig-' + shutter.id + '" type="button" class="btn btn-default" aria-label="Configure">' + '<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span></button>' + '</td></tr>');
 
 					$('#openConfig-' + shutter.id).on('click', function(){
 						editShutterSettings(shutter.id);
@@ -185,19 +187,9 @@ var init = function () {
 					$('#slider-' + shutter.id).roundSlider('option', 'value', updates > 0 ? copyCfg.shutters[shutter.id - 1].targetAngle : 0);
 					$('#slider-' + shutter.id).roundSlider('option', 'animation', true);
 					$('#slider-' + shutter.id).roundSlider('option', 'value', shutter.targetAngle);
-
-					$('#tr-' + shutter.id).hover(
-
-						function () { //in
-							$('#slider-' + shutter.id + ' .rs-inner').css('background-color', 'whitesmoke');
-						},
-
-						function () { //out
-							$('#slider-' + shutter.id + ' .rs-inner').css('background-color', 'white');
-						}
-
-					);
-
+						
+					$('tr:nth-child(odd) .rs-inner').css('background-color', 'whitesmoke');
+					
 				});
 
 				break;
@@ -210,7 +202,7 @@ var init = function () {
 
 					$('#container').append('<h3>' + shutter.loc + '</h3>');
 					$('#container').append(
-						"<table class='table table-bordered table-hover' id='table-shutter-" + shutter.id + "'></table>"
+						"<table class='ef-table' id='table-shutter-" + shutter.id + "'></table>"
 					);
 
 					shutter.captors.forEach(function (captor) {
@@ -240,7 +232,7 @@ var init = function () {
 						});
 
 						$('#table-shutter-' + shutter.id).append(
-							'<tr ' + (attrib === 'value' ? 'id="tr-' + shutter.id + '"' : '') + '><th>' + attrib[0].toUpperCase() + attrib.substr(1) + '</th>' + vals + '</tr>'
+							'<tr><th>' + attrib[0].toUpperCase() + attrib.substr(1) + '</th>' + vals + '</tr>'
 						);
 
 						var value;
@@ -269,18 +261,6 @@ var init = function () {
 
 						$('#slider-' + shutter.id + ' .rs-range-color').css('background-color', colors[(shutter.id - 1) % colors.length]);
 
-						$('#tr-' + shutter.id).hover(
-
-							function () { //in
-								$('#slider-' + shutter.id + ' .rs-inner').css('background-color', 'whitesmoke');
-							},
-
-							function () { //out
-								$('#slider-' + shutter.id + ' .rs-inner').css('background-color', 'white');
-							}
-
-						);
-
 					});
 
 				});
@@ -295,7 +275,7 @@ var init = function () {
 	};
 	
 	$(window).resize(function(){
-		if((lastWidth <= 600 && window.innerWidth > 600) || (lastWidth > 600 && window.innerWidth <= 600)){
+		if((lastWidth <= 767 && window.innerWidth > 767) || (lastWidth > 767 && window.innerWidth <= 767)){
 			navbarHandler();
 			lastWidth = window.innerWidth;
 		}
