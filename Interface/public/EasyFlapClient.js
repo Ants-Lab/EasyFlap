@@ -1,4 +1,4 @@
-var cfg, copyCfg, updates = -1,
+var cfg, copyCfg, updates = -1, lastWidth = window.innerWidth,
 	colors = ['#27ae60', '#2980b9', '#c0392b', '#8e44ad'],
 	socket;
 
@@ -116,7 +116,7 @@ var init = function () {
 	};
 
 	var navbarHandler = function () {
-
+		
 		$('#container').empty();
 
 		var page = location.hash.substr(1);
@@ -133,29 +133,46 @@ var init = function () {
 				);
 
 				cfg.shutters.forEach(function (shutter) {
+					
+					var isSlider = window.innerWidth > 600;
+					var sliderOrSwitch = 
+						isSlider ? '<div id="slider-' + shutter.id + '" class="slider"></div>' :
+						'<input type="checkbox" id="switch-' + shutter.id + '" ' + (shutter.targetAngle >= 90 ? "checked" : "") + ' data-toggle="toggle" data-onstyle="success" data-offstyle="primary">';
 
-					$('#table').append('<tr id="tr-' + shutter.id + '">' + '<td>' + shutter.id + '</td>' + '<td id="table-loc-' + shutter.id + '">' + shutter.loc + '</td>' + '<td><div id="slider-' + shutter.id + '" class="slider"></div></td>' + '<td><button id="openConfig-' + shutter.id + '" type="button" class="btn btn-default" aria-label="Configure">' + '<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span></button>' + '</td></tr>');
+					$('#table').append('<tr id="tr-' + shutter.id + '">' + '<td>' + shutter.id + '</td>' + '<td id="table-loc-' + shutter.id + '">' + shutter.loc + '</td>' + '<td>' + sliderOrSwitch + '</td>' + '<td><button id="openConfig-' + shutter.id + '" type="button" class="btn btn-default" aria-label="Configure">' + '<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span></button>' + '</td></tr>');
 
 					$('#openConfig-' + shutter.id).on('click', function(){
 						editShutterSettings(shutter.id);
 					});
 					
-					$('#slider-' + shutter.id).roundSlider({
-						radius: 60,
-						width: 14,
-						circleShape: 'half-top',
-						handleSize: "24,12",
-						handleShape: "square",
-						sliderType: "min-range",
-						showTooltip: 'false',
-						min: 0,
-						max: 180,
+					if(isSlider){
+						$('#slider-' + shutter.id).roundSlider({
+							radius: 60,
+							width: 14,
+							circleShape: 'half-top',
+							handleSize: "24,12",
+							handleShape: "square",
+							sliderType: "min-range",
+							showTooltip: 'true',
+							min: 0,
+							max: 180,
 
-						change: function (e) {
-							shutter.targetAngle = e.value;
+							change: function (e) {
+								shutter.targetAngle = e.value;
+								emitConfigChange();
+							}
+						});
+					}else{
+						$('#switch-' + shutter.id).bootstrapToggle({
+							on: 'Opened',
+							off: 'Closed'
+						});
+						
+						$('#switch-' + shutter.id).change(function(){
+							shutter.targetAngle = $(this).prop('checked') ? 180: 0;
 							emitConfigChange();
-						}
-					});
+						});
+					}
 
 					$('#slider-' + shutter.id + ' .rs-range-color').css('background-color', colors[(shutter.id - 1) % colors.length]);
 
@@ -271,9 +288,24 @@ var init = function () {
 		}
 
 	};
+	
+	$(window).resize(function(){
+		if((lastWidth <= 600 && window.innerWidth > 600) || (lastWidth > 600 && window.innerWidth <= 600)){
+			navbarHandler();
+			lastWidth = window.innerWidth;
+		}
+	});
 };
 
 (function () {
+	
+	if(localStorage.getItem('timeout') !== null){
+		if(new Date().getTime() > localStorage.getItem('timeout')){
+			localStorage.removeItem('timeout');
+			localStorage.removeItem('token');
+		}
+	}
+	
 	if (params.isLocalAccess) {
 		socket = io.connect(params.ip.local + ':1621');
 	} else { //Whatever the host is, try to connect to the public ip of the server
@@ -308,11 +340,12 @@ var init = function () {
 	socket.on('login_response', function(res){
 		
 		if(res.err === null && res.token !== null){
+            $('body').css('background-color', 'white');
 			token = res.token;
-			$('#loginBox').hide();
-			$('#particles').hide();
+			$('#loginBox').empty();
 			$('#navbar').show();
 			localStorage.setItem('token', res.token);
+			localStorage.setItem('timeout', new Date().getTime() + params.sessionTimeLimit);
 			init();
 		}else{
 			alertify.error(res.err);
@@ -320,16 +353,13 @@ var init = function () {
 	});
 	
 	socket.on('logout_req', function(err){
+		localStorage.removeItem('token');
+		localStorage.removeItem('timeout');
+		
 		if(err !== null){
 			alertify.error(err);
-			setTimeout(400, function(){location.reload()});
+			setTimeout(2000, location.reload());
 		}
-		//TODO: Bind and unbind socket.io listeners
-		$('#container').empty();
-		$('#navbar').hide();
-		$('#loginBox').show();
-		$('#particles').show();
-		localStorage.removeItem('token');
 	});
 
 })();

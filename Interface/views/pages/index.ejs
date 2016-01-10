@@ -25,8 +25,13 @@
 
 	<!-- RoundSlider -->
 	<script src="libs/roundslider-1.0.min.js"></script>
-
+	
 	<link rel="stylesheet" href="libs/roundslider-1.0.min.css">
+	
+	<!-- Bootstrap-toggle -->
+	<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.0/css/bootstrap-toggle.min.css" rel="stylesheet">
+	
+	<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.0/js/bootstrap-toggle.min.js"></script>
 
 	<!-- DeepDiff -->
 	<script src="libs/deep-diff-0.3.3.min.js"></script>
@@ -39,6 +44,10 @@
 
 	<!-- EasyFlapClient.js -->
 	<script src="EasyFlapClient.js"></script>
+    
+    <!-- Fonts -->
+    
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Slab' rel='stylesheet' type='text/css'>
 
 </head>
 
@@ -50,11 +59,6 @@
 	
 	<% include ../partials/navbar %>
 	
-	<% if(params.isLocalAccess){ %>
-		<script>
-			$('#navbar').show();
-		</script>
-	<% } %>
 	
 	<% include ../partials/configBox %>
 	

@@ -7,8 +7,7 @@ var express = require('express'),
 	loc_ip = require('ip'),
 	crypto = require('crypto');
 
-var cfg, users, sessionTimeLimit = 1800000; //30 minutes
-var tokens = {};
+var cfg, users, tokens = {}, sessionDuration = 900000; //15 minutes
 
 var log = function(msg){
 	var date = new Date
@@ -27,6 +26,8 @@ pub_ip.v4(function (err, pubIp) {
 	params.ip.public = pubIp;
 
 	params.ip.local = loc_ip.address();
+	
+	params.sessionTimeLimit = sessionDuration;
 
 	init(params);
 
@@ -47,10 +48,11 @@ var checkAuth = function(socket, token){
 		return false;
 	}
 	
-	log('Remaining session time: ' + (tokens[token].time - date.getTime())/60000 + 'm');
+	var d = (tokens[token].time - date.getTime())/1000;
+	log('Remaining session time: ' + Math.floor(d / 60) + 'm' + Math.floor(d % 60) + 's');
 	
 	return true;
-}
+};
 
 
 var init = function (params) {
@@ -150,15 +152,17 @@ var init = function (params) {
 						}
 
 						if (success) {
-							var time = new Date().getTime();
 							if(loginData === null || !tokens.hasOwnProperty(loginData.token)){
 								token = crypto.randomBytes(64).toString('hex');
-								tokens[token] = {
-									time: time + sessionTimeLimit
-								};
 							}else{
 								token = loginData.token;
 							}
+							
+							tokens[token] = {
+								time: new Date().getTime() + sessionDuration
+							};
+							
+							socket.session.timeout = tokens[token].time;
 						}
 
 						socket.emit('login_response', { err: err, token: token });
