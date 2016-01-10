@@ -11,39 +11,56 @@
 #include <nRF24L01.h>
 #include <MirfHardwareSpiDriver.h>
 
+//Global variables
 int CE_PIN = 8;
 int CSN_PIN = 7;
 int CHANNEL = 42; //0-127
 int PAYLOAD = 32; //2.4Ghz module payload. Max 32 bytes
-int SERIAL_PAYLOAD = 48; //Serial payload
-char ADDRESS[] = "rpi01";
+char ADDRESS[] = "flbox";
 
 void setup() {
   Serial.begin(9600);
 
-  Serial.println("Arduino setup starting...");
-
+  //Init Mirf
   Mirf.cePin = CE_PIN;
   Mirf.csnPin = CSN_PIN;
   Mirf.spi = &MirfHardwareSpi;
   Mirf.init();
 
+  //Config Mirf
   Mirf.channel = CHANNEL;
   Mirf.payload = PAYLOAD;
   Mirf.config();
-
   Mirf.setRADDR((byte *)ADDRESS);
-
 }
 
 void loop() {
 
+  //Receive from rpi and send it to shutter
   if(Serial.available() > 0){
-    if(Serial.peek() == 1){
-      Serial.read();
+    if(Serial.peek() == 42){
+      Serial.read(); //Useful ?
+
+      //Read the shutter address on the USB serial
+      byte shAddByte[5];
+      Serial.readBytes(shAddByte, sizeof(shAddByte));
+
+      //Convert the address to char array
+      char shAddChar[5];
+      for (int i=0; i < 5; i++){
+        shAddChar[i] = (char)shAddByte[i];
+      }
+      //Set the shutter address
+      Mirf.setTADDR((byte *)shAddChar);
+
+      //Read the message on the USB serial
       byte data[Mirf.payload];
       Serial.readBytes(data, sizeof(data));
-      //TODO
+
+      //Send the message
+      Mirf.send(&data);
+      //Wait
+      while(Mirf.isSending());
     }
   }
 
@@ -51,7 +68,7 @@ void loop() {
   if(!Mirf.isSending() && Mirf.dataReady()){
     byte data[Mirf.payload];
     Mirf.getData(data);
-    Serial.write(0);
+    Serial.write(43); //Useful ?
     Serial.write(data, sizeof(data));
   }
 }
