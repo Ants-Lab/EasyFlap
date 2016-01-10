@@ -14,7 +14,8 @@
 int CE_PIN = 8;
 int CSN_PIN = 7;
 int CHANNEL = 42; //0-127
-int PAYLOAD = 32; //Max 32 bytes
+int PAYLOAD = 32; //2.4Ghz module payload. Max 32 bytes
+int SERIAL_PAYLOAD = 48; //Serial payload
 char ADDRESS[] = "rpi01";
 
 void setup() {
@@ -36,13 +37,17 @@ void setup() {
 }
 
 void loop() {
-  if(Serial.available() > 0 && Serial.peek() == 1){
-    Serial.read();
-    byte data[Mirf.payload];
-    Serial.readBytes(&data, sizeof(data));
-    //TODO
+
+  if(Serial.available() > 0){
+    if(Serial.peek() == 1){
+      Serial.read();
+      byte data[Mirf.payload];
+      Serial.readBytes(data, sizeof(data));
+      //TODO
+    }
   }
 
+  //Receive from 2.4Ghz receiver and write on USB serial
   if(!Mirf.isSending() && Mirf.dataReady()){
     byte data[Mirf.payload];
     Mirf.getData(data);
