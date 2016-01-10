@@ -1,8 +1,11 @@
 # Protocol
 
 **Channel :** 42
+
 **Message size / Payload :** 32 MB
+
 **FlapBox address:** flbox
+
 **Shutters addresses:** sh*xxx*
 
 ### Flapbox → Shutter
