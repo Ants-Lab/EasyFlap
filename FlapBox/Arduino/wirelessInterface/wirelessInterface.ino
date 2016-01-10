@@ -68,7 +68,6 @@ void loop() {
   if(!Mirf.isSending() && Mirf.dataReady()){
     byte data[Mirf.payload];
     Mirf.getData(data);
-    Serial.write(43); //Useful ?
     Serial.write(data, sizeof(data));
   }
 }
