@@ -137,7 +137,7 @@ var init = function () {
 					var isSlider = window.innerWidth > 600;
 					var sliderOrSwitch = 
 						isSlider ? '<div id="slider-' + shutter.id + '" class="slider"></div>' :
-						'<input type="checkbox" id="switch-' + shutter.id + '" ' + (shutter.targetAngle >= 90 ? "checked" : "") + ' data-toggle="toggle" data-onstyle="success" data-offstyle="primary">';
+						'<input type="checkbox" id="switch-' + shutter.id + '" ' + (copyCfg.shutters[shutter.id - 1].targetAngle > 90 ? "checked" : "") + ' data-toggle="toggle" data-onstyle="success" data-offstyle="primary">';
 
 					$('#table').append('<tr id="tr-' + shutter.id + '">' + '<td>' + shutter.id + '</td>' + '<td id="table-loc-' + shutter.id + '">' + shutter.loc + '</td>' + '<td>' + sliderOrSwitch + '</td>' + '<td><button id="openConfig-' + shutter.id + '" type="button" class="btn btn-default" aria-label="Configure">' + '<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span></button>' + '</td></tr>');
 
@@ -163,10 +163,15 @@ var init = function () {
 							}
 						});
 					}else{
+						
 						$('#switch-' + shutter.id).bootstrapToggle({
 							on: 'Opened',
 							off: 'Closed'
 						});
+						
+						if(updates === 0 || ((copyCfg.shutters[shutter.id - 1].targetAngle > 90) !== (shutter.targetAngle > 90))){
+							$('#switch-' + shutter.id).bootstrapToggle(shutter.targetAngle > 90 ? 'on' : 'off');	
+						}
 						
 						$('#switch-' + shutter.id).change(function(){
 							shutter.targetAngle = $(this).prop('checked') ? 180: 0;
