@@ -5,13 +5,16 @@ var express = require('express'),
 	fs = require('fs'),
 	pub_ip = require('public-ip'),
 	loc_ip = require('ip'),
-	crypto = require('crypto');
+	crypto = require('crypto'),
+	chalk = require('chalk');
 
 var cfg, users, tokens = {}, sessionDuration = 900000; //15 minutes
 
-var log = function(msg){
-	var date = new Date
-	console.log(date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + ': ' + JSON.stringify(msg));
+var log = function(msg, socket){
+	var date = new Date(),
+		m = date.getMinutes(),
+		s = date.getSeconds();
+	console.log(chalk.green(date.getHours() + ':' + (m < 10 ? ("0" + m) : m) + ':' + (s < 10 ? ("0" + s) : s)  + ':') + ' ' + chalk.blue(JSON.stringify(msg)));
 };
 
 //Get server's public and local ip
@@ -166,6 +169,10 @@ var init = function (params) {
 						}
 
 						socket.emit('login_response', { err: err, token: token });
+					});
+					
+					socket.on('end', function(){
+						log('Client disconnected', true);
 					});
 
 				});

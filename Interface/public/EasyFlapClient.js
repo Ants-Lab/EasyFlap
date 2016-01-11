@@ -239,7 +239,7 @@ var init = function () {
 
 						for (var i = 0; i < shutter.captors.length; i++) {
 							if (shutter.captors[i].type === 'position') {
-								value = Number.parseInt(shutter.captors[i].value);
+								value = parseInt(shutter.captors[i].value);
 								break;
 							}
 						}
@@ -314,11 +314,6 @@ var init = function () {
 				socket.emit('login_attempt', { "user": $('#user').val(), "pass": $('#pass').val() });
 			});
 			
-			$(window).on('keypress', function(e){
-				if(e.keyCode === 13){
-					$('#loginButton').trigger('click');
-				}
-			});
 		}
 	});
 	
@@ -328,7 +323,7 @@ var init = function () {
             $('body').css('background-color', 'white');
 			token = res.token;
 			$('#loginBox').empty();
-			$('#navbar').show();
+			$('#navbar').fadeIn(700);
 			localStorage.setItem('token', res.token);
 			localStorage.setItem('timeout', new Date().getTime() + params.sessionTimeLimit);
 			init();
@@ -348,3 +343,12 @@ var init = function () {
 	});
 
 })();
+
+window.onload = (function(){
+	
+	$('#configBox').on('keypress', function(e){
+		if(e.keyCode === 13){
+			$('#applyChanges').trigger('click');
+		}
+	});
+});
