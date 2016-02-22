@@ -2,7 +2,7 @@
 
 **Channel :** 42
 
-**Message size / Payload :** 32 MB
+**Message size / Payload :** 32 B
 
 **FlapBox address:** flbox
 
@@ -10,10 +10,11 @@
 
 ### Flapbox → Shutter
 
-| Command ID (1 Byte) | Data (31 Bytes) |     *Function*     |
-| ------------------- | --------------- | ------------------ |
-|          1          |  Angle (1 Byte) |*Rotate the shutter*|
-|          ?          |        ?        |        *?*         |
+| Command ID (1 Byte) | Data (31 Bytes) |      *Function*      |
+| ------------------- | --------------- | -------------------- |
+|          1          |  Angle (1 Byte) | *Rotate the shutter* |
+|          2          |        N        |*Request shutter info*|
+|          ?          |        ?        |         *?*          |
 
 ### Shutter → FlapBox
 
