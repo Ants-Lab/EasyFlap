@@ -1,3 +1,5 @@
+'use strict'
+
 var express = require('express'),
 	app = express(),
 	server = require('http').createServer(app),
@@ -8,9 +10,9 @@ var express = require('express'),
 	crypto = require('crypto'),
 	chalk = require('chalk');
 
-var cfg, users, tokens = {}, sessionDuration = 900000; //15 minutes
+var cfg, users, tokens = {}, sessionDuration = 10800000, program_list;
 
-var log = function(msg, socket){
+var log = function(msg, socket) {
 	var date = new Date(),
 		m = date.getMinutes(),
 		s = date.getSeconds();
@@ -36,22 +38,22 @@ pub_ip.v4(function (err, pubIp) {
 
 });
 
-var checkAuth = function(socket, token){
+var checkAuth = function(socket, token) {
 	
 	var date = new Date();
 	
-	if(!tokens.hasOwnProperty(token)){
+	if(!tokens.hasOwnProperty(token)) {
 		socket.emit("logout_req", "Invalid session token");
 		return false;	
 	}
 						
-	if(date.getTime() > tokens[token].time){
+	if(date.getTime() > tokens[token].time) {
 		socket.emit("logout_req", "Session timeout");
 		delete tokens[token];
 		return false;
 	}
 	
-	var d = (tokens[token].time - date.getTime())/1000;
+	var d = (tokens[token].time - date.getTime()) / 1000;
 	log('Remaining session time: ' + Math.floor(d / 60) + 'm' + Math.floor(d % 60) + 's');
 	
 	return true;
@@ -88,6 +90,12 @@ var init = function (params) {
 					});
 				});
 
+				//Program nav tab
+				app.get('/Program', function(req, res) {
+					params.isLocalAccess = req.get('host') === params.ip.local + ':1621';
+					res.render('pages/blockly', { config : cfg, params : params });
+				});				
+
 				var sendError = function (socket, errorMsg) {
 					log('Error: ' + errorMsg);
 					socket.emit('err', errorMsg);
@@ -104,7 +112,152 @@ var init = function (params) {
 						socket.emit('config', cfg);
 					});
 
-					socket.on('configUpdate', function (data) {
+					//Custom programs
+
+					var getCustomProgram = function(prog_name) {
+
+						var searchForProg = function(files, resolve, reject) {
+							for (var i = 0; i < files.length; i++) {
+								if (files[i] === prog_name + '.json') {
+									return fs.readFile('./public/custom_programs/' + prog_name + '.json', 'utf-8', function(err, data) {
+										if (err) {
+											reject("Can't read file : " + prog_name + '.json');
+										} else {
+											resolve(data);
+										}
+									});
+								}
+							}
+						};
+
+						return new Promise(function(resolve, reject) {
+
+							if (program_list === undefined) {
+								fs.readdir('public/custom_programs', function(err, files) {
+									program_list = files;
+									searchForProg(program_list, resolve, reject);
+								});	
+							} else {
+								searchForProg(program_list, resolve, reject);
+							}
+						});					
+					};
+
+					var changeCustomProgram = function(prog_name, change) { //Returns a promise which tells wether the change has been successful
+
+						return new Promise(function(resolve, reject)  {
+							getCustomProgram(prog_name).then(function(prog) {
+								prog = JSON.parse(prog);
+								Object.keys(change).forEach(function(prop) {
+									prog[prop] = change[prop];
+								});
+
+								fs.writeFile('./public/custom_programs/' + prog_name + '.json', JSON.stringify(prog), function(err) {
+									if (err) { reject(false); }
+									else { resolve(true); }
+								});
+							}, function(err) {
+								reject(false);
+							});
+						});										
+						
+					};					
+
+					socket.on('custom_progs_req', function() {
+
+						var progs = [];				
+
+						program_list =	fs.readdirSync('public/custom_programs');
+
+						program_list.forEach(function(file, idx) {
+							if (file.indexOf('.json') !== -1) {
+								try {
+									var parsedFile = JSON.parse(fs.readFileSync('./public/custom_programs/' + file, 'utf-8'));
+									progs.push({name: parsedFile.name, description: parsedFile.description});
+								} catch (e) {
+									console.log('Caugth an expception while parsing ' + file + ' : ' + e);
+								}
+							} 
+						});
+
+						socket.emit('custom_progs', progs);						
+					});
+
+					socket.on('custom_prog_req', function(prog_name) {
+						
+						getCustomProgram(prog_name).then(function(prog) {
+							socket.emit('custom_prog', prog);
+						}, function(err) {
+							socket.emit('custom_prog', new Error(err));
+						});
+					});
+
+					socket.on('prog_change_req', function(data) {
+
+						changeCustomProgram(data.prog_name, data.change).then(function() {
+							socket.emit('prog_changed', {
+								prog_name: data.prog_name,
+								success: true
+							});
+
+							socket.broadcast.emit('prog_update', data);							
+						}, function() {
+							socket.emit('prog_changed', {
+								prog_name: data.prog_name,
+								success: false
+							});
+						});
+
+					});
+
+					socket.on('workspace_change', function(data) {
+						if (!checkAuth(socket, data.token)) return;
+						socket.broadcast.emit('workspace_changed', { prog_name: data.prog_name, xml: data.xml });
+					});			
+
+					socket.on('prog_save', function(data) {
+
+						if (!checkAuth(socket, data.token)) return;
+
+						var parsedJson = JSON.parse(data.json);
+
+						fs.writeFile('./public/custom_programs/' + parsedJson.name + '.json', data.json, function(err) {
+							if (err) {
+								socket.emit('prog_save_status', {program: parsedJson.name, success: false});
+								throw err;
+							}
+
+							console.log('Saved ' + parsedJson.name);
+
+							if(!(function(arr, key) { //(parsedJson.name + '.json') in program_list doesn't seem to work
+								for (var i = 0; i < arr.length; i++) {
+									if (arr[i] === key) return true;
+								}
+								return false;
+							})(program_list, parsedJson.name + '.json'))  {
+								program_list.push(parsedJson.name + '.json');
+							}						
+
+							socket.emit('prog_save_status', {program: parsedJson.name, success: true});
+						});
+						
+					});
+
+					socket.on('delete_prog_req', function(prog_name) {
+
+						var file = './public/custom_programs/' + prog_name + '.json';
+						
+						fs.exists(file, function(exists) {
+							if (program_list.indexOf(prog_name + '.json') !== -1 &&  exists) {
+								fs.unlink(file);
+								socket.emit('prog_deleted', prog_name);
+								program_list.splice(program_list.indexOf(prog_name + '.json'), 1);
+								log('Deleted ' + file);
+							}					
+						});
+					});	
+
+					socket.on('config_update', function (data) {
 						
 						if(!checkAuth(socket, data.token))
 							return;
@@ -116,7 +269,7 @@ var init = function (params) {
 
 						(function (obj, value, path) {
 							path = path.split('.');
-							for (i = 0; i < path.length - 1; i++)
+							for (var i = 0; i < path.length - 1; i++)
 								obj = obj[path[i]];
 
 							obj[path[i]] = value;
@@ -127,8 +280,12 @@ var init = function (params) {
 							if (err) log(err);
 						});
 
-						socket.broadcast.emit('configUpdate', { path: data.path, newVal: data.newVal });
+						socket.broadcast.emit('config_update', { path: data.path, newVal: data.newVal });
 					});
+
+					socket.on('prog_update', function(prog) {
+						console.log(prog);
+					});				
 
 					socket.on('login_attempt', function (loginData) {
 						
@@ -139,12 +296,12 @@ var init = function (params) {
 							success = false;
 						
 						if (loginData === null) {
-							if(socket.session.isLocalAccess){
+							if(socket.session.isLocalAccess) {
 								success = true;
 							}
-						}else if(loginData.hasOwnProperty('token') && checkAuth(socket, loginData.token)){
+						} else if(loginData.hasOwnProperty('token') && checkAuth(socket, loginData.token)) {
 							success = true;
-						}else if (loginData.user in users) {
+						} else if (loginData.user in users) {
 							if (users[loginData.user] === loginData.pass) {
 								success = true;
 							} else {
@@ -155,7 +312,7 @@ var init = function (params) {
 						}
 
 						if (success) {
-							if(loginData === null || !tokens.hasOwnProperty(loginData.token)){
+							if(loginData === null || !tokens.hasOwnProperty(loginData.token)) {
 								token = crypto.randomBytes(64).toString('hex');
 							}else{
 								token = loginData.token;
