@@ -326,6 +326,14 @@ var init = function () {
 								colour: '#ccc',
 								snap: true
 							},
+							zoom: {
+								controls: true,
+								wheel: true,
+								startScale: 1.0,
+								maxScale: 3,
+								minScale: 0.3,
+								scaleSpeed: 1.2
+							},
 							trashcan: true
 						});
 
@@ -369,7 +377,7 @@ var init = function () {
 							{ url: 'blockly/generators/javascript/procedures.js' },
 							{ url: 'blockly/generators/javascript/variables.js' },
 
-							{ url: 'blockly/msg/js/en.js' }
+							{ url: 'blockly/msg/js/fr.js' }
 						).then(function()  {
 							console.log('Blockly loaded successfully');
 							blockly_loaded = true;
