@@ -116,6 +116,9 @@ var init = function (params) {
 
 					var getCustomProgram = function(prog_name) {
 
+						if (prog_name.indexOf('.json') !== -1)
+							prog_name = prog_name.split('.json')[0];						
+
 						var searchForProg = function(files, resolve, reject) {
 							for (var i = 0; i < files.length; i++) {
 								if (files[i] === prog_name + '.json') {
@@ -163,24 +166,36 @@ var init = function (params) {
 						
 					};					
 
+					var getProgsList = function() {
+						return new Promise(function(resolve, reject) {
+							fs.readdir('public/custom_programs', function(err, files) {
+								console.log(files);
+								if (err) { reject(err); }
+								else { resolve(files); }
+							});
+						});
+					};
+
 					socket.on('custom_progs_req', function() {
 
-						var progs = [];				
+						var progs = [], promises = [];
 
-						program_list =	fs.readdirSync('public/custom_programs');
-
-						program_list.forEach(function(file, idx) {
+						getProgsList().then(function(files) {
+							files.forEach(function(file, idx) {
 							if (file.indexOf('.json') !== -1) {
 								try {
-									var parsedFile = JSON.parse(fs.readFileSync('./public/custom_programs/' + file, 'utf-8'));
-									progs.push({name: parsedFile.name, description: parsedFile.description});
+									getCustomProgram(file).then(function(prog) {
+										var parsedFile = JSON.parse(prog);
+										progs.push({name: parsedFile.name, description: parsedFile.description});
+									});
 								} catch (e) {
 									console.log('Caugth an expception while parsing ' + file + ' : ' + e);
 								}
 							} 
 						});
-
-						socket.emit('custom_progs', progs);						
+						}, function(err) {
+							
+						});						
 					});
 
 					socket.on('custom_prog_req', function(prog_name) {
