@@ -13,6 +13,7 @@
 | Command ID (1 Byte) | Data (11 Bytes) |     *Function*     |
 | ------------------- | --------------- | ------------------ |
 |          1          |  Angle (1 Byte) |*Rotate the shutter*|
+|          2          |        N        |   *Ask for info*   |
 |          ?          |        ?        |        *?*         |
 
 ### Shutter → FlapBox
