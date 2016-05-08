@@ -10,9 +10,10 @@
 
 ### Flapbox → Shutter
 
-| Shutter ID (1 Byte) | Command ID (1 Byte) | Data (6 Bytes) |     *Function*     |
+| Shutter ID (1 Byte) | Command ID (1 Byte) | Data (6 Bytes)  |     *Function*     |
 | ------------------- | ------------------- | --------------- | ------------------ |
 |          X          |          1          |  Angle (1 Byte) |*Rotate the shutter*|
+|          X          |          2          |        N        |   *Ask for info*   |
 |          ?          |          ?          |        ?        |        *?*         |
 
 ### Shutter → FlapBox
