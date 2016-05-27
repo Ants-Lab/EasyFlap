@@ -20,12 +20,12 @@ class EasyFlap {
 	public Shutters = [];
 	private shutters : Shutter[];
 	
-	constructor(shutters: Shutter[]) {
+	constructor(shutters: Shutter[], socketio) {
 
 		for (let shutter of shutters) 
 			this.Shutters.push(shutter.id);
 
-		this.shutters = shutters;		
+		this.shutters = shutters;	
 
 	}
 
@@ -41,10 +41,15 @@ class EasyFlap {
 		}
 	}
 
-	setAngle(shutter, angle) {
+	setAngle(shutter: Shutter, angle) {
 
 		angle = Math.abs(angle) % 180;
 
+	}
+	
+	closeShutter(shutter: Shutter) {
+		
+		
 	}
 
 	getCaptorValue(shutterId, parameter) {

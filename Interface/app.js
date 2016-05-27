@@ -84,7 +84,8 @@ var init = function (params) {
 				app.use(express.static(__dirname + '/public'));
 
 				app.get('/', function (req, res) {
-					params.isLocalAccess = req.get('host') === params.ip.local + ':1621';
+					params.isLocalAccess = req.get('host') === params.ip.local + ':1621'
+					|| req.get('host') === 'localhost:1621';
 					res.render('pages/index', {
 						params: params
 					});
@@ -181,12 +182,23 @@ var init = function (params) {
 						var progs = [], promises = [];
 
 						getProgsList().then(function(files) {
+							
+							var custom_progs = [];
+							
 							files.forEach(function(file, idx) {
+								if (file.indexOf('.json') !== -1)
+									custom_progs.push(file);
+							});
+							
+							custom_progs.forEach(function(file, idx) {
 							if (file.indexOf('.json') !== -1) {
 								try {
 									getCustomProgram(file).then(function(prog) {
 										var parsedFile = JSON.parse(prog);
 										progs.push({name: parsedFile.name, description: parsedFile.description});
+										if (progs.length === custom_progs.length) {
+											socket.emit('custom_progs', progs);
+										}
 									});
 								} catch (e) {
 									console.log('Caugth an expception while parsing ' + file + ' : ' + e);

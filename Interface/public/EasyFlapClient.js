@@ -377,7 +377,7 @@ var init = function () {
 							{ url: 'blockly/generators/javascript/procedures.js' },
 							{ url: 'blockly/generators/javascript/variables.js' },
 
-							{ url: 'blockly/msg/js/fr.js' }
+							{ url: 'blockly/msg/js/en.js' }
 						).then(function()  {
 							console.log('Blockly loaded successfully');
 							blockly_loaded = true;
