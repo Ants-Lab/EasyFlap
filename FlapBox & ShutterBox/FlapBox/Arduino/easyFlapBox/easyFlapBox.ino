@@ -1,83 +1,78 @@
+#include <FlapUtils.h>
 #include <SPI.h>
 #include <Mirf.h>
 #include <nRF24L01.h>
 #include <MirfHardwareSpiDriver.h>
+
+const int PAYLOAD = 24;
+const int CHANNEL = 42;
 
 void configureMirf() {
   Mirf.spi = &MirfHardwareSpi;
   Mirf.init();
   Mirf.setRADDR((byte *)"flbox");
   Mirf.setTADDR((byte *)"sh001");
-  Mirf.payload = 32;
-  Mirf.channel = 42;
+  Mirf.payload = PAYLOAD;
+  Mirf.channel = CHANNEL;
   Mirf.config();
-  Serial.println("Mirf configured successfully");
-}
-
-void writeFloat(byte* b, float f, int offset) {
-  memcpy(b + offset, &f, 4);
-}
-
-void readFloat(byte* b, float* f, int offset) {
-  memcpy(f + offset, b, 4);
-}
-
-void writeInt(byte* b, int i, int offset) {
-  memcpy(b + offset, &i, 4);
-}
-
-void readInt(byte* b, int* i, int offset) {
-  memcpy(i + offset, b, 4);
-}
-
-void writeByte(byte* b, byte bb, int offset) {
-  memcpy(b + offset, &bb, 4);
-}
-
-void readByte(byte* b, byte* bb, int offset) {
-  memcpy(bb + offset, b, 4);
+  //Serial.println("Mirf configured successfully");
 }
 
 void setup() {
   Serial.begin(9600);
 
-  Serial.println("EasyFlapBox started, configuration started...");
+  //Serial.println("EasyFlapBox started, configuration started...");
 
   configureMirf();
 
-  Serial.println("Configured successfully !");
+  //Serial.println("Configured successfully !");
 }
 
 void loop() {
 
-  byte buff[32];
-  writeByte(buff, 2, 0);
-  Mirf.send(buff);
+  if(Serial.available() > 0){
+    
+    String message = Serial.readString();
 
-  Serial.println("Information request sent.");
-
-  while (Mirf.isSending() || !Mirf.dataReady()) {
-    delay(10);
+    if(message.charAt(0) == '1'){
+      byte pos = message.charAt(1);
+      byte buf[PAYLOAD] = { 0 };
+      buf[0] = 1;
+      buf[1] = pos;
+      Mirf.send(buf);
+    }else if(message.charAt(0) == '2'){
+      
+      byte buf[PAYLOAD] = { 0 };
+      buf[0] = 2;
+      Mirf.send(buf);
+    }
   }
 
-  byte response[32];
+  if(!Mirf.isSending() && Mirf.dataReady()){
+    byte data[PAYLOAD] = { 0 };
 
-  Mirf.getData(response);
+    Mirf.getData(data);
 
-  switch (response[0]) {
-    //Information received
-    case 1:
-      Serial.println("Information response received.");
-      float temp, hum, li;
-      readFloat(response, &temp, 5);
-      readFloat(response, &hum, 9);
-      readFloat(response, &li, 13);
-      Serial.println("Temperature : " + String(temp));
-      Serial.println("Humidity : " + String(hum));
-      Serial.println("Light : " + String(li));
-      break;
+    switch (data[0]) {
+      //Information received
+      case 1:
+        //Serial.println("Information response received.");
+        int id;
+        FUtils.readInt(data, &id, 1);
+        float temp, hum, li;
+        FUtils.readFloat(data, &temp, 5);
+        FUtils.readFloat(data, &hum, 9);
+        FUtils.readFloat(data, &li, 13);
+        Serial.println("1;" + String(id) + ";" + String(temp) + ";" + String(hum) + ";" + String(li)); 
+        delay(1000);
+        //Serial.println("Temperature : " + String(temp));
+        //Serial.println("Humidity : " + String(hum));
+        //Serial.println("Light : " + String(li));
+        break;
+    }
   }
-  delay(10000);
+
+  
 }
 
 

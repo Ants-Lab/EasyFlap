@@ -2,7 +2,7 @@
 
 **Channel :** 42
 
-**Message size / Payload :** 12 MB
+**Message size / Payload :** 24 Bytes
 
 **FlapBox address:** flbox
 
