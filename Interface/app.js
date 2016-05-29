@@ -13,7 +13,7 @@ var express = require('express'),
 	SerialPort = serialport.SerialPort,
 	parsers = serialport.parsers;
 
-var cfg, users, tokens = {}, sessionDuration = 10800000, program_list;
+var cfg, users, tokens = {}, sessionDuration = 1800000, program_list;
 
 var log = function(msg, socket) {
 	var date = new Date(),

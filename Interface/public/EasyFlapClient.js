@@ -115,6 +115,18 @@ var init = function () {
 
 		$('#configBox_title').text('Configure ' + config.shutters[id - 1].loc.toLowerCase() + ' shutters');
 
+		var rule = '<div class="form-group">' + '<select>' + '<option>Close</option>' + '<option>Open</option>' + '<option>Set angle to</option>' + '</select>' + ' this shutter when ' + '<select>' + '<option>temperature</option>' + '<option>luminosity</option>' + '<option>humidity</option>' + '</select>' + ' is ' + '<select>' + '<option>bigger than</option>' + '<option>less than</option>' + '</select>' + ' ' + '<input type="number" style="max-width: 85px">' + '</div>';
+
+		$('.modal-body').append(
+			'<label class="control-label">Rules</label>' +
+			rule +
+			'<button type="button" id="add-rule-btn" class="btn btn-info btn-sm">Add Rule</button>'
+		);
+		
+		$('#add-rule-btn').click(function(e) {
+			$('#add-rule-btn').before(rule);
+		});
+
 		$('#configBox_applyChanges').bind('click', configBox_applyChangesHandler);
 
 		$('#configBox').modal();

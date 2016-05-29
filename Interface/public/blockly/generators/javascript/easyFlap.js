@@ -15,7 +15,7 @@ Blockly.JavaScript['ef_runevery'] = function(block) {
   var dropdown_seconds = block.getFieldValue('seconds');
   var statements = Blockly.JavaScript.statementToCode(block, 'TIME');
 
-  var code = 'Blockly.runEvery(function(' + dropdown_seconds + ') {\n ' + statements + ' \n});\n';
+  var code = 'EasyFlap.runEvery(function(' + dropdown_seconds + ') {\n ' + statements + ' \n});\n';
   return code;
 };
 
