@@ -8,7 +8,10 @@ var express = require('express'),
 	pub_ip = require('public-ip'),
 	loc_ip = require('ip'),
 	crypto = require('crypto'),
-	chalk = require('chalk');
+	chalk = require('chalk'),
+	serialport = require('serialport'),
+	SerialPort = serialport.SerialPort,
+	parsers = serialport.parsers;
 
 var cfg, users, tokens = {}, sessionDuration = 10800000, program_list;
 
@@ -59,6 +62,51 @@ var checkAuth = function(socket, token) {
 	return true;
 };
 
+var nano_listening = false;
+
+var nano_listen = function(socket) {
+	
+	if(!nano_listening) {
+	
+		var nano = new SerialPort('/dev/ttyUSB0', { //communicate with the Arduino nano
+			baudrate: 9600,
+			parser: parsers.readline('\r\n')
+		});
+		
+		nano.on('open', function() {
+			console.log('Port open');
+		});
+		
+		nano.on('data', function() {
+			var messageSplit = data.toString().split(';');
+			console.log(data.toString());
+			
+			if(messageSplit[0] === '1') {
+				var shutterId = messageSplit[1],
+					temperature = messageSplit[2],
+					humidity = messageSplit[3],
+					lux = messageSplit[3];
+					
+				if(lux !== undefined)
+					cfg.shutters[0].captors[0].value = lux;
+				if(humidity !== undefined)
+					cfg.shutters[0].captors[1].value = humidity;
+				if(temperature !== undefined)
+					cfg.shutters[0].captors[2].value = temperature;
+					
+				fs.writeFile('./public/config.json', JSON.stringify(cfg), function(err) {
+					if(err) throw Error(err);
+					socket.broadcast.emit('config', JSON.stringify(cfg)); 
+				});
+			}
+		});
+		
+		nano_listening = true;
+		
+	}
+	
+	
+};
 
 var init = function (params) {
 
@@ -107,10 +155,12 @@ var init = function (params) {
 					socket.session = {};
 					socket.session.isLocalAccess = params.isLocalAccess;
 
+					nano_listen(socket);
+
 					//Send config data
 
 					socket.on('config_req', function(){
-						socket.emit('config', cfg);
+						socket.emit('config', JSON.stringify(cfg));
 					});
 
 					//Custom programs
@@ -355,7 +405,7 @@ var init = function (params) {
 						socket.emit('login_response', { err: err, token: token });
 					});
 					
-					socket.on('end', function(){
+					socket.on('end', function() {
 						log('Client disconnected', true);
 					});
 
