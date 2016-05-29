@@ -96,7 +96,7 @@ var nano_listen = function(socket) {
 					
 				fs.writeFile('./public/config.json', JSON.stringify(cfg), function(err) {
 					if(err) throw Error(err);
-					socket.broadcast.emit('config', JSON.stringify(cfg)); 
+					socket.broadcast.emit('config', cfg); 
 				});
 			}
 		});
@@ -160,7 +160,7 @@ var init = function (params) {
 					//Send config data
 
 					socket.on('config_req', function(){
-						socket.emit('config', JSON.stringify(cfg));
+						socket.emit('config', cfg);
 					});
 
 					//Custom programs
